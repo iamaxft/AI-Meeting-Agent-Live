@@ -1,0 +1,17 @@
+Python
+pycache/
+*.pyc
+
+Virtual Environment
+venv/
+.venv/
+
+IDE / Editor specific
+.idea/
+.vscode/
+
+Generated database file
+site.db
+
+Local configuration (if you were to use a .env file)
+.env

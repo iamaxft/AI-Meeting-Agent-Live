@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Connect to Trello{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Connect to Trello (Step 2 of 2)</h1>
+    <p>
+        You have been redirected to Trello to authorize this application. Please click "Allow", then copy the PIN Trello provides you and paste it into the box below.
+    </p>
+
+    <div style="margin: 2rem 0;">
+        <a href="{{ auth_url }}" target="_blank" style="display: inline-block; padding: 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+            Click Here to Get Your Trello PIN
+        </a>
+    </div>
+
+    <form method="POST" action="{{ url_for('trello_save_token') }}">
+        <div style="margin-bottom: 1rem;">
+            <label for="pin">Paste Your Trello PIN Here:</label>
+            <input type="text" name="pin" id="pin" required style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; margin-top: 5px;">
+        </div>
+        <button type="submit" style="width: 100%; padding: 1rem; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">Complete Connection</button>
+    </form>
+</div>
+{% endblock %}

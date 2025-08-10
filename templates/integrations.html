@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Integrations{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Integrations</h1>
+    <p>Connect your favorite tools to automate your workflow.</p>
+
+    <div style="margin-top: 2rem;">
+        <h2>Trello</h2>
+        {% if current_user.trello_credentials %}
+            <div style="padding: 1rem; background-color: #d4edda; border-radius: 5px;">
+                <p><strong>Status:</strong> Connected as {{ current_user.trello_credentials.trello_username }}</p>
+                <a href="{{ url_for('trello_disconnect') }}" style="color: #721c24;">Disconnect</a>
+            </div>
+        {% else %}
+            <p>Connect your Trello account to automatically create cards for your action items.</p>
+            <a href="{{ url_for('trello_connect') }}" style="display: inline-block; padding: 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+                Connect to Trello
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

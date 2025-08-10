@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Analyze Transcript{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>AI Meeting Agent</h1>
+    <p style="text-align: center; margin-bottom: 2rem;">Paste your meeting transcript below, choose your automations, and click "Analyze & Automate".</p>
+
+    <form action="{{ url_for('analyze') }}" method="post">
+        <textarea name="transcript" placeholder="Paste your meeting transcript here...">{{ transcript or '' }}</textarea>
+
+        <h2 style="margin-top: 2rem;">Automations</h2>
+
+        <!-- Email Automation -->
+        <div class="checkbox-group" style="display: flex; align-items: center; gap: 10px; margin-top: 1rem;">
+            <input type="checkbox" id="send_email" name="send_email" value="true">
+            <label for="send_email">Send Summary Email to Team Members</label>
+        </div>
+
+        <!-- Trello Automation -->
+        <div class="checkbox-group" style="display: flex; align-items: center; gap: 10px; margin-top: 1rem;">
+            <input type="checkbox" id="create_trello" name="create_trello" value="true" {% if not current_user.trello_credentials %}disabled{% endif %}>
+            <label for="create_trello">Create Trello Cards for Action Items</label>
+            {% if not current_user.trello_credentials %}
+                <small>(<a href="{{ url_for('integrations') }}">Connect Trello to enable</a>)</small>
+            {% endif %}
+        </div>
+
+        {% if current_user.trello_credentials %}
+        <div id="trello-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+            <div>
+                <label for="trello-board">Select Board:</label>
+                <select name="trello_board_id" id="trello-board" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                    <option value="">-- Select a Board --</option>
+                    {% for board in trello_boards %}
+                        <option value="{{ board.id }}">{{ board.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="trello-list">Select List:</label>
+                <select name="trello_list_id" id="trello-list" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                    <option value="">-- Select a Board First --</option>
+                </select>
+            </div>
+        </div>
+        {% endif %}
+
+        <button type="submit" style="margin-top: 1.5rem;">Analyze & Automate</button>
+    </form>
+
+    {% if notification %}
+        <div class="notification {{ notification.type }}" style="padding: 1rem; margin-top: 1rem; border-radius: 5px; text-align: center; background-color: #d4edda; color: #155724;">
+            {{ notification.message }}
+        </div>
+    {% endif %}
+
+    {% if analysis and not analysis.error %}
+    <div class="results" style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
+        <h2>Summary</h2>
+        <p>{{ analysis.summary }}</p>
+
+        <h2>Key Decisions</h2>
+        <ul style="list-style-type: none; padding-left: 0;">
+            {% for decision in analysis.decisions %}
+            <li style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 10px;">{{ decision }}</li>
+            {% endfor %}
+        </ul>
+
+        <h2>Action Items</h2>
+        <ul style="list-style-type: none; padding-left: 0;">
+            {% for item in analysis.action_items %}
+            <li style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+                <strong>Task:</strong> {{ item.task }}<br>
+                <strong>Assignee:</strong> {{ item.assignee }}<br>
+                <strong>Due Date:</strong> {{ item.due_date }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% elif analysis and analysis.error %}
+        <div class="alert danger" style="margin-top: 2rem;">
+            <strong>Analysis Error:</strong> {{ analysis.error }}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    // This script dynamically fetches the lists for the selected Trello board
+    document.addEventListener('DOMContentLoaded', function() {
+        const boardSelect = document.getElementById('trello-board');
+        if (boardSelect) {
+            boardSelect.addEventListener('change', function() {
+                const boardId = this.value;
+                const listSelect = document.getElementById('trello-list');
+                listSelect.innerHTML = '<option value="">Loading...</option>'; // Clear existing options
+
+                if (boardId) {
+                    fetch(`/get_lists/${boardId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            listSelect.innerHTML = '<option value="">-- Select a List --</option>';
+                            data.forEach(list => {
+                                const option = document.createElement('option');
+                                option.value = list.id;
+                                option.textContent = list.name;
+                                listSelect.appendChild(option);
+                            });
+                        });
+                } else {
+                    listSelect.innerHTML = '<option value="">-- Select a Board First --</option>';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

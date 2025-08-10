@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}My Team{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if current_user.team %}
+        <h1>Team: {{ current_user.team.name }}</h1>
+        <p>Here are the members of your team.</p>
+        
+        <ul style="list-style-type: none; padding-left: 0;">
+            {% for member in current_user.team.members %}
+            <li style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+                <strong>{{ member.username }}</strong> ({{ member.email }})
+            </li>
+            {% endfor %}
+        </ul>
+
+        <hr style="margin: 2rem 0;">
+
+        <h2>Invite a New Member</h2>
+        <form method="POST" action="{{ url_for('invite') }}">
+            <div style="margin-bottom: 1rem;">
+                <label for="email">User's Email:</label>
+                <input type="email" name="email" id="email" required style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;">
+            </div>
+            <button type="submit" style="width: 100%; padding: 1rem; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">Send Invite</button>
+        </form>
+
+    {% else %}
+        <h1>Create Your Team</h1>
+        <p>You haven't created or joined a team yet. Create one now to start collaborating.</p>
+        <form method="POST" action="{{ url_for('create_team') }}">
+            <div style="margin-bottom: 1rem;">
+                <label for="team_name">Team Name:</label>
+                <input type="text" name="team_name" id="team_name" required style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;">
+            </div>
+            <button type="submit" style="width: 100%; padding: 1rem; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Create Team</button>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}
