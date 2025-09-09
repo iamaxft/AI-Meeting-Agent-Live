@@ -291,18 +291,6 @@ def create_app():
             flash('Trello account disconnected.', 'success')
         return redirect(url_for('integrations'))
 
-    # --- ADD THIS TEMPORARY ROUTE TO SETUP YOUR DATABASE ---
-    # IMPORTANT: Change the secret string in the URL to your own!
-    @app.route('/setup-database/blue-ocean-car-987-xyz')
-    def setup_database():
-        try:
-            db.create_all()
-            db.session.commit()
-            return "<h1>Success!</h1><p>Your database tables have been created.</p>"
-        except Exception as e:
-            return f"<h1>Error!</h1><p>An error occurred: {e}</p>"
-    # ---------------------------------------------------------
-
     return app
 
 
