@@ -12,8 +12,6 @@ from extensions import db, bcrypt, login_manager
 from models import User, Team, TrelloCredentials, TrelloCard
 
 # --- CONFIGURATION (Loaded from Environment Variables) ---
-# We use os.environ.get() to safely load these from the server environment.
-# DO NOT hardcode these values here in a production app.
 TRELLO_API_KEY = os.environ.get("TRELLO_API_KEY")
 TRELLO_API_SECRET = os.environ.get("TRELLO_API_SECRET")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -26,16 +24,16 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = FLASK_SECRET_KEY
 
-    # --- THIS IS THE KEY DATABASE CHANGE ---
-    # It uses the DATABASE_URL from Render, but falls back to your local SQLite file.
+    # --- Database Configuration ---
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
-        # The replace() is a fix for Render's URL format to work with SQLAlchemy
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace("://", "ql://", 1)
+        # If the URL starts with 'postgres://', replace it with 'postgresql://'
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     else:
         # For local development
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-    # ------------------------------------------
 
     db.init_app(app)
     bcrypt.init_app(app)
@@ -128,8 +126,7 @@ def create_app():
             db.session.rollback()
             return f"Failed to create Trello cards: {e}"
 
-    # --- ALL YOUR ROUTES REMAIN EXACTLY THE SAME ---
-    # ... from @app.route('/') to @app.route('/trello/disconnect') ...
+    # --- ROUTES ---
     @app.route('/')
     @app.route('/home')
     @login_required
@@ -177,8 +174,6 @@ def create_app():
         return render_template('index.html', analysis=analysis_result, transcript=transcript_text,
                                notification=notification, trello_boards=boards)
 
-    # ... (All other routes like register, login, team, integrations, etc., remain the same)
-    # ...
     @app.route('/register', methods=['GET', 'POST'])
     def register():
         if current_user.is_authenticated: return redirect(url_for('home'))
@@ -296,6 +291,17 @@ def create_app():
             flash('Trello account disconnected.', 'success')
         return redirect(url_for('integrations'))
 
+    # --- ADD THIS TEMPORARY ROUTE TO SETUP YOUR DATABASE ---
+    # IMPORTANT: Change the secret string in the URL to your own!
+    @app.route('/setup-database/blue-ocean-car-987-xyz')
+    def setup_database():
+        try:
+            db.create_all()
+            db.session.commit()
+            return "<h1>Success!</h1><p>Your database tables have been created.</p>"
+        except Exception as e:
+            return f"<h1>Error!</h1><p>An error occurred: {e}</p>"
+    # ---------------------------------------------------------
 
     return app
 
