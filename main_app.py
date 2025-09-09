@@ -1,26 +1,41 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from flask_login import login_user, logout_user, login_required, current_user
+import os
 import json
-import google.generativeai as genai
 import smtplib
 from email.mime.text import MIMEText
+
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask_login import login_user, logout_user, login_required, current_user
+import google.generativeai as genai
 from trello import TrelloClient
 
 from extensions import db, bcrypt, login_manager
 from models import User, Team, TrelloCredentials, TrelloCard
 
-# --- CONFIGURATION ---
-TRELLO_API_KEY = "f4fa3a09b3308b68263da619dc1e00a8"
-TRELLO_API_SECRET = "6359f7707fed6d520c2d4eb5b3719339ab782008b28338228cc99cd2b681c733"
-GEMINI_API_KEY = "AIzaSyCA0FLzbvar7ww3ffKbcVmhjYy8S5mu6dU"
-SENDER_EMAIL = "skfourcc@gmail.com"  # For sending emails
-SENDER_PASSWORD = "hmhc ucjk fwtn kxzd"  # Google App Password
+# --- CONFIGURATION (Loaded from Environment Variables) ---
+# We use os.environ.get() to safely load these from the server environment.
+# DO NOT hardcode these values here in a production app.
+TRELLO_API_KEY = os.environ.get("TRELLO_API_KEY")
+TRELLO_API_SECRET = os.environ.get("TRELLO_API_SECRET")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL")
+SENDER_PASSWORD = os.environ.get("SENDER_PASSWORD") # Google App Password
+FLASK_SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "a-default-secret-key-for-local-dev")
 
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'a_very_secret_key_change_this'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+    app.config['SECRET_KEY'] = FLASK_SECRET_KEY
+
+    # --- THIS IS THE KEY DATABASE CHANGE ---
+    # It uses the DATABASE_URL from Render, but falls back to your local SQLite file.
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # The replace() is a fix for Render's URL format to work with SQLAlchemy
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace("://", "ql://", 1)
+    else:
+        # For local development
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+    # ------------------------------------------
 
     db.init_app(app)
     bcrypt.init_app(app)
@@ -33,21 +48,19 @@ def create_app():
 
     # --- AI MODEL AND HELPER FUNCTIONS ---
     try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        print("[*] Gemini AI model configured successfully.")
+        if GEMINI_API_KEY:
+            genai.configure(api_key=GEMINI_API_KEY)
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            print("[*] Gemini AI model configured successfully.")
+        else:
+            model = None
+            print("[!] GEMINI_API_KEY not found. AI features will be disabled.")
     except Exception as e:
         model = None
         print(f"[!] Error configuring Gemini AI: {e}")
 
     def analyze_transcript_with_ai(transcript_text):
-        """
-        Takes transcript text and returns a structured analysis from the AI model.
-        Includes improved error handling and debugging.
-        """
-        if not model: return {"error": "AI model is not configured."}
-
-        # A slightly more robust prompt
+        if not model: return {"error": "AI model is not configured or the API key is missing."}
         prompt = f"""
         Analyze the following meeting transcript. Provide your analysis ONLY in a valid JSON object format. Do not include any text, markdown formatting, or explanations before or after the JSON object.
 
@@ -63,50 +76,31 @@ def create_app():
 
         JSON Analysis:
         """
-
         try:
             response = model.generate_content(prompt)
-
-            # --- DEBUGGING STEP ---
-            # Print the raw response from the AI to see what we're getting
-            print("\n--- Raw AI Response ---")
-            print(response.text)
-            print("-----------------------\n")
-
+            print("\n--- Raw AI Response ---\n", response.text, "\n-----------------------\n")
             json_text = response.text.strip().replace('```json', '').replace('```', '').strip()
-
             if not json_text:
-                return {
-                    "error": "Failed to get analysis from AI: Received an empty response. This may be due to a safety filter."}
-
+                return {"error": "Failed to get analysis from AI: Received an empty response. This may be due to a safety filter."}
             return json.loads(json_text)
-
         except json.JSONDecodeError as json_err:
             error_message = f"Failed to parse AI response as JSON. Error: {json_err}. Raw response was: '{response.text}'"
-            print(f"  [!] {error_message}")
             return {"error": error_message}
         except Exception as e:
-            print(f"  [!] An unexpected error occurred during AI analysis: {e}")
-            return {"error": f"An unexpected error occurred: {e}"}
+            return {"error": f"An unexpected error occurred during AI analysis: {e}"}
 
     def get_trello_client(user):
         if user.trello_credentials and user.trello_credentials.token:
-            return TrelloClient(
-                api_key=TRELLO_API_KEY,
-                api_secret=TRELLO_API_SECRET,
-                token=user.trello_credentials.token
-            )
+            return TrelloClient(api_key=TRELLO_API_KEY, api_secret=TRELLO_API_SECRET, token=user.trello_credentials.token)
         return None
 
     def send_summary_email(recipients, analysis):
-        if not SENDER_EMAIL or not SENDER_PASSWORD or SENDER_PASSWORD == "your_16_character_app_password":
-            return "Email credentials are not configured in the script."
+        if not SENDER_EMAIL or not SENDER_PASSWORD:
+            return "Email credentials are not configured on the server."
         subject = "Meeting Summary & Action Items"
         body = f"<h2>Meeting Summary</h2><p>{analysis['summary']}</p>"
         body += "<h2>Key Decisions</h2><ul>" + "".join([f"<li>{d}</li>" for d in analysis['decisions']]) + "</ul>"
-        body += "<h2>Action Items</h2><ul>" + "".join(
-            [f"<li><b>Task:</b> {i['task']} | <b>Assignee:</b> {i['assignee']} | <b>Due:</b> {i['due_date']}</li>" for i
-             in analysis['action_items']]) + "</ul>"
+        body += "<h2>Action Items</h2><ul>" + "".join([f"<li><b>Task:</b> {i['task']} | <b>Assignee:</b> {i['assignee']} | <b>Due:</b> {i['due_date']}</li>" for i in analysis['action_items']]) + "</ul>"
         msg = MIMEText(body, 'html')
         msg['Subject'], msg['From'], msg['To'] = subject, SENDER_EMAIL, ", ".join(recipients)
         try:
@@ -126,15 +120,7 @@ def create_app():
                 card_desc = f"Assignee: {item['assignee']}\nDue Date: {item['due_date']}"
                 new_card = target_list.add_card(name=card_name, desc=card_desc)
                 cards_created += 1
-                db_card = TrelloCard(
-                    card_id=new_card.id,
-                    user_id=user_id,
-                    board_id=board_id,
-                    list_id=list_id,
-                    task_description=item['task'],
-                    assignee=item['assignee'],
-                    due_date_str=item['due_date']
-                )
+                db_card = TrelloCard(card_id=new_card.id, user_id=user_id, board_id=board_id, list_id=list_id, task_description=item['task'], assignee=item['assignee'], due_date_str=item['due_date'])
                 db.session.add(db_card)
             db.session.commit()
             return f"{cards_created} Trello cards created successfully."
@@ -142,7 +128,8 @@ def create_app():
             db.session.rollback()
             return f"Failed to create Trello cards: {e}"
 
-    # --- ROUTES ---
+    # --- ALL YOUR ROUTES REMAIN EXACTLY THE SAME ---
+    # ... from @app.route('/') to @app.route('/trello/disconnect') ...
     @app.route('/')
     @app.route('/home')
     @login_required
@@ -309,11 +296,14 @@ def create_app():
             flash('Trello account disconnected.', 'success')
         return redirect(url_for('integrations'))
 
+
     return app
 
 
 if __name__ == '__main__':
     app = create_app()
     with app.app_context():
-        db.create_all()
+        # This will create the sqlite file locally if it doesn't exist
+        if not os.environ.get('DATABASE_URL'):
+            db.create_all()
     app.run(debug=True)

@@ -1,45 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-    <!-- Use the same styling as register.html -->
-    <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f7f9; }
-        .form-container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 350px; }
-        h2 { text-align: center; color: #0a2540; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 5px; }
-        input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { width: 100%; padding: 1rem; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .alert { padding: 1rem; margin-top: 1rem; border-radius: 5px; text-align: center; }
-        .danger { background-color: #f8d7da; color: #721c24; }
-    </style>
-</head>
-<body>
-    <div class="form-container">
-        <h2>Log In</h2>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert {{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        <form method="POST" action="">
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" name="email" required>
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-center min-h-[calc(100vh-12rem)]">
+    <div class="w-full max-w-md">
+        <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-2xl">
+            
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-500">
+                    Welcome Back
+                </h2>
+                <p class="text-slate-400 mt-2">Log in to access your dashboard.</p>
             </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" name="password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
-        <p style="text-align: center; margin-top: 1rem;">
-            Need an account? <a href="{{ url_for('register') }}">Register</a>
-        </p>
+
+            <form method="POST" action="" class="space-y-6">
+                
+                <div>
+                    <label for="email" class="block text-sm font-bold text-slate-300 mb-2">Email Address</label>
+                    <input type="email" name="email" id="email" required
+                           class="w-full bg-slate-800 border-2 border-slate-700 rounded-lg p-3 text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-300 ease-in-out"
+                           placeholder="you@example.com">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-bold text-slate-300 mb-2">Password</label>
+                    <input type="password" name="password" id="password" required
+                           class="w-full bg-slate-800 border-2 border-slate-700 rounded-lg p-3 text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-300 ease-in-out"
+                           placeholder="••••••••">
+                </div>
+                
+                <button type="submit" 
+                        class="w-full flex items-center justify-center gap-x-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out">
+                    Log In
+                </button>
+            </form>
+
+            <p class="text-center text-slate-400 mt-6">
+                Need an account? 
+                <a href="{{ url_for('register') }}" class="font-medium text-cyan-400 hover:underline">
+                    Register here
+                </a>
+            </p>
+        </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

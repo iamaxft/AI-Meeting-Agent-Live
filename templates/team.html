@@ -2,40 +2,78 @@
 {% block title %}My Team{% endblock %}
 
 {% block content %}
-<div class="container">
-    {% if current_user.team %}
-        <h1>Team: {{ current_user.team.name }}</h1>
-        <p>Here are the members of your team.</p>
-        
-        <ul style="list-style-type: none; padding-left: 0;">
-            {% for member in current_user.team.members %}
-            <li style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
-                <strong>{{ member.username }}</strong> ({{ member.email }})
-            </li>
-            {% endfor %}
-        </ul>
 
-        <hr style="margin: 2rem 0;">
+{% if current_user.team %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
 
-        <h2>Invite a New Member</h2>
-        <form method="POST" action="{{ url_for('invite') }}">
-            <div style="margin-bottom: 1rem;">
-                <label for="email">User's Email:</label>
-                <input type="email" name="email" id="email" required style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;">
+        <div class="lg:col-span-2">
+            <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl">
+                <div class="mb-6">
+                    <h1 class="text-3xl font-bold text-white">Team: <span class="text-cyan-400">{{ current_user.team.name }}</span></h1>
+                    <p class="text-slate-400 mt-1">Here are the members of your team.</p>
+                </div>
+
+                <ul class="space-y-3">
+                    {% for member in current_user.team.members %}
+                    <li class="flex items-center gap-4 bg-slate-800 p-4 rounded-lg border border-slate-700">
+                        <span class="flex-shrink-0 bg-slate-700 h-10 w-10 rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        </span>
+                        <div>
+                            <strong class="text-slate-200 font-medium">{{ member.username }}</strong>
+                            <p class="text-sm text-slate-400">{{ member.email }}</p>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
-            <button type="submit" style="width: 100%; padding: 1rem; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">Send Invite</button>
-        </form>
+        </div>
 
-    {% else %}
-        <h1>Create Your Team</h1>
-        <p>You haven't created or joined a team yet. Create one now to start collaborating.</p>
-        <form method="POST" action="{{ url_for('create_team') }}">
-            <div style="margin-bottom: 1rem;">
-                <label for="team_name">Team Name:</label>
-                <input type="text" name="team_name" id="team_name" required style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;">
+        <div class="lg:col-span-1">
+             <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl">
+                <h2 class="text-2xl font-bold text-white mb-4">Invite a New Member</h2>
+                <form method="POST" action="{{ url_for('invite') }}" class="space-y-4">
+                    <div>
+                        <label for="email" class="sr-only">User's Email:</label>
+                        <input type="email" name="email" id="email" required
+                               class="w-full bg-slate-800 border-2 border-slate-700 rounded-lg p-3 text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+                               placeholder="teammate@example.com">
+                    </div>
+                    <button type="submit"
+                            class="w-full flex items-center justify-center gap-x-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transform hover:scale-105 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>
+                        Send Invite
+                    </button>
+                </form>
             </div>
-            <button type="submit" style="width: 100%; padding: 1rem; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Create Team</button>
-        </form>
-    {% endif %}
-</div>
+        </div>
+
+    </div>
+
+{% else %}
+    <div class="flex items-center justify-center min-h-[calc(100vh-12rem)]">
+        <div class="w-full max-w-md">
+            <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-2xl text-center">
+                <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-500">
+                    Create Your Team
+                </h1>
+                <p class="text-slate-400 mt-2 mb-6">Create a team to start collaborating and sharing meeting analyses.</p>
+
+                <form method="POST" action="{{ url_for('create_team') }}" class="space-y-6">
+                    <div>
+                        <label for="team_name" class="sr-only">Team Name</label>
+                        <input type="text" name="team_name" id="team_name" required
+                               class="w-full bg-slate-800 border-2 border-slate-700 rounded-lg p-3 text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+                               placeholder="e.g., The A-Team">
+                    </div>
+                    <button type="submit"
+                            class="w-full flex items-center justify-center gap-x-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transform hover:scale-105 transition-all">
+                        Create Team
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
 {% endblock %}

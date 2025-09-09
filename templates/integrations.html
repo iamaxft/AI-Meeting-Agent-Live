@@ -2,23 +2,56 @@
 {% block title %}Integrations{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Integrations</h1>
-    <p>Connect your favorite tools to automate your workflow.</p>
 
-    <div style="margin-top: 2rem;">
-        <h2>Trello</h2>
-        {% if current_user.trello_credentials %}
-            <div style="padding: 1rem; background-color: #d4edda; border-radius: 5px;">
-                <p><strong>Status:</strong> Connected as {{ current_user.trello_credentials.trello_username }}</p>
-                <a href="{{ url_for('trello_disconnect') }}" style="color: #721c24;">Disconnect</a>
-            </div>
-        {% else %}
-            <p>Connect your Trello account to automatically create cards for your action items.</p>
-            <a href="{{ url_for('trello_connect') }}" style="display: inline-block; padding: 1rem; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
-                Connect to Trello
-            </a>
-        {% endif %}
-    </div>
+<div class="text-center mb-10">
+    <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-500 mb-2">
+        Manage Integrations
+    </h1>
+    <p class="text-slate-400 max-w-2xl mx-auto">
+        Connect your favorite tools to supercharge your workflow.
+    </p>
 </div>
+
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl shadow-xl overflow-hidden">
+        <div class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <svg class="w-12 h-12" fill="none" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="40" height="40" rx="4" fill="#0079BF"/>
+                    <rect x="19.5" y="7" width="13" height="13" rx="2" fill="#fff"/>
+                    <rect x="7.5" y="7" width="13" height="20" rx="2" fill="#fff"/>
+                </svg>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Trello</h2>
+                    <p class="text-slate-400 text-sm">Automate task and action item creation.</p>
+                </div>
+            </div>
+
+            <div class="w-full sm:w-auto">
+                {% if current_user.trello_credentials %}
+                    <div class="text-center sm:text-right">
+                        <div class="flex items-center justify-center gap-2 px-3 py-1 bg-green-900/50 border border-green-700 rounded-full text-green-300 text-sm">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            Connected
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2 mb-1">
+                            as {{ current_user.trello_credentials.trello_username }}
+                        </p>
+                        <a href="{{ url_for('trello_disconnect') }}" class="text-sm text-red-400 hover:text-red-300 hover:underline transition-colors">
+                            Disconnect
+                        </a>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('trello_connect') }}"
+                       class="w-full sm:w-auto flex items-center justify-center gap-x-2 bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-600 hover:to-sky-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out">
+                        Connect
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    </div>
+
 {% endblock %}
