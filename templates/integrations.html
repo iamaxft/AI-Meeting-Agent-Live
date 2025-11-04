@@ -27,7 +27,6 @@
                     <p class="text-slate-400 text-sm">Automate task and action item creation.</p>
                 </div>
             </div>
-
             <div class="w-full sm:w-auto">
                 {% if current_user.trello_credentials %}
                     <div class="text-center sm:text-right">
@@ -52,6 +51,124 @@
         </div>
     </div>
 
+    <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl shadow-xl overflow-hidden">
+        <div class="p-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <svg class="w-12 h-12" fill="none" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg">
+                         <path d="M12.5 15.125a4.125 4.125 0 1 1 0-8.25 4.125 4.125 0 0 1 0 8.25Z" fill="#36C5F0"></path><path d="M15.125 12.5a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0Z" fill="#2EB67D"></path><path d="M15.125 21.875a4.125 4.125 0 1 1 0 8.25 4.125 4.125 0 0 1 0-8.25Z" fill="#ECB22E"></path><path d="M12.5 24.5a4.125 4.125 0 1 1-8.25 0 4.125 4.125 0 0 1 8.25 0Z" fill="#E01E5A"></path><path d="M21.875 15.125a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0Z" fill="#2EB67D"></path><path d="M24.5 12.5a4.125 4.125 0 1 1 0-8.25 4.125 4.125 0 0 1 0 8.25Z" fill="#36C5F0"></path><path d="M24.5 21.875a4.125 4.125 0 1 1 0 8.25 4.125 4.125 0 0 1 0-8.25Z" fill="#E01E5A"></path><path d="M21.875 24.5a4.125 4.125 0 1 1-8.25 0 4.125 4.125 0 0 1 8.25 0Z" fill="#ECB22E"></path><path d="M38.875 21.875a4.125 4.125 0 1 1 0 8.25 4.125 4.125 0 0 1 0-8.25Z" fill="#ECB22E"></path><path d="M36.25 24.5a4.125 4.125 0 1 1-8.25 0 4.125 4.125 0 0 1 8.25 0Z" fill="#E01E5A"></path><path d="M36.25 38.875a4.125 4.125 0 1 1 0-8.25 4.125 4.125 0 0 1 0 8.25Z" fill="#36C5F0"></path><path d="M38.875 36.25a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0Z" fill="#2EB67D"></path><path d="M21.875 36.25a4.125 4.125 0 1 1 0-8.25 4.125 4.125 0 0 1 0 8.25Z" fill="#E01E5A"></path><path d="M24.5 38.875a4.125 4.125 0 1 1-8.25 0 4.125 4.125 0 0 1 8.25 0Z" fill="#ECB22E"></path><path d="M24.5 49.625a4.125 4.125 0 1 1 0-8.25 4.125 4.125 0 0 1 0 8.25Z" fill="#2EB67D"></path><path d="M21.875 47a4.125 4.125 0 1 1-8.25 0 4.125 4.125 0 0 1 8.25 0Z" fill="#36C5F0"></path>
+                    </svg>
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Slack</h2>
+                        <p class="text-slate-400 text-sm">Post meeting summaries to a channel.</p>
+                    </div>
+                </div>
+                {% if current_user.is_authenticated and current_user.team and current_user.team.slack_webhook_url %}
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center gap-2 px-3 py-1 bg-green-900/50 border border-green-700 rounded-full text-green-300 text-sm">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                        Connected
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="mt-6 w-full">
+                {% if current_user.is_authenticated and current_user.team %}
+                    {% if current_user.team.slack_webhook_url %}
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm text-slate-400">Your team is connected to Slack.</p>
+                            <a href="{{ url_for('slack_disconnect') }}"
+                               class="text-sm text-red-400 hover:text-red-300 hover:underline transition-colors">
+                                Disconnect
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-slate-400 text-sm mb-4">
+                            Connect your team by pasting an <a href="https://api.slack.com/messaging/webhooks" target="_blank" class="text-cyan-400 hover:underline">Incoming Webhook URL</a> below.
+                        </p>
+                        <form action="{{ url_for('slack_connect') }}" method="POST" class="flex flex-col sm:flex-row gap-2">
+                            <input type="url" name="slack_webhook_url"
+                                   class="w-full flex-grow bg-slate-800 border-2 border-slate-700 rounded-lg p-3 text-sm text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+                                   placeholder="https://hooks.slack.com/services/T00.../.../.../..." required>
+                            <button type="submit"
+                                    class="flex-shrink-0 flex items-center justify-center gap-x-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transform hover:scale-105 transition-all">
+                                Save
+                            </button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <p class="text-slate-500 text-sm">
+                        You must <a href="{{ url_for('team') }}" class="text-cyan-400 hover:underline">create or join a team</a> to enable Slack integration.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl shadow-xl overflow-hidden">
+        <div class="p-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21.6528 11.1348C21.6528 11.1348 15.7078 17.0798 11.9998 20.7878C11.9998 20.7878 8.29177 17.0798 2.34677 11.1348C2.34677 11.1348 8.29177 5.18981 11.9998 1.48181C11.9998 1.48181 17.9448 7.42681 21.6528 11.1348Z" fill="#2684FF"></path>
+                        <path d="M11.9997 20.7877C11.9997 20.7877 8.29173 17.0797 2.34673 11.1347C2.34673 11.1347 8.29173 5.18974 11.9997 1.48174V20.7877Z" fill="#0052CC"></path>
+                     </svg>
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Jira</h2>
+                        <p class="text-slate-400 text-sm">Automate issue creation for action items.</p>
+                    </div>
+                </div>
+                {% if current_user.jira_credentials %}
+                <div class="flex-shrink-0">
+                    <div class="flex items-center justify-center gap-2 px-3 py-1 bg-green-900/50 border border-green-700 rounded-full text-green-300 text-sm">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                        Connected
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="mt-6 w-full">
+                {% if current_user.jira_credentials %}
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm text-slate-400">Connected as {{ current_user.jira_credentials.email }}</p>
+                        <a href="{{ url_for('jira_disconnect') }}"
+                           class="text-sm text-red-400 hover:text-red-300 hover:underline transition-colors">
+                            Disconnect
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-slate-400 text-sm mb-1">
+                        Connect your Jira Cloud account using your email and an <a href="https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/" target="_blank" class="text-cyan-400 hover:underline">API Token</a>.
+                    </p>
+                     <p class="text-slate-500 text-xs mb-4"> (Your API token is used like a password and should be kept secret.)</p>
+                    <form action="{{ url_for('jira_connect') }}" method="POST" class="space-y-4">
+                        <div>
+                             <label for="jira_url" class="block text-sm font-medium text-slate-300 mb-1">Jira Instance URL</label>
+                            <input type="url" name="jira_url" id="jira_url"
+                                   class="w-full bg-slate-800 border-2 border-slate-700 rounded-lg p-3 text-sm text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+                                   placeholder="https://your-domain.atlassian.net" required>
+                        </div>
+                        <div>
+                             <label for="jira_email" class="block text-sm font-medium text-slate-300 mb-1">Your Jira Email</label>
+                            <input type="email" name="jira_email" id="jira_email"
+                                   class="w-full bg-slate-800 border-2 border-slate-700 rounded-lg p-3 text-sm text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+                                   placeholder="you@example.com" required>
+                        </div>
+                         <div>
+                             <label for="jira_api_token" class="block text-sm font-medium text-slate-300 mb-1">Jira API Token</label>
+                            <input type="password" name="jira_api_token" id="jira_api_token"
+                                   class="w-full bg-slate-800 border-2 border-slate-700 rounded-lg p-3 text-sm text-slate-300 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+                                   placeholder="Paste your API token here" required>
+                        </div>
+                        <button type="submit"
+                                class="w-full flex items-center justify-center gap-x-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transform hover:scale-105 transition-all">
+                                Connect Jira
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
     </div>
 
 {% endblock %}
